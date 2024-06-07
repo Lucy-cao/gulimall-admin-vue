@@ -1,7 +1,11 @@
 <template>
   <div>
-    <el-tree :data="menus" :props="defaultProps" :expand-on-click-node="false" show-checkbox node-key="catId"
-             :default-expanded-keys="expandKeys">
+    <el-tree :data="menus" :props="defaultProps"
+             :expand-on-click-node="false"
+             show-checkbox
+             node-key="catId"
+             :default-expanded-keys="expandKeys"
+             draggable :allow-drop="allowDrop">
     <span class="custom-tree-node" slot-scope="{ node, data }">
       <span>{{ node.label }}</span>
       <span>
@@ -60,7 +64,8 @@ export default {
         productUnit: ""
       },
       formLabelWidth: '120px',
-      title: ""//弹窗的标题
+      title: "",//弹窗的标题
+      maxLevel: 1
     };
   },
   methods: {
@@ -111,13 +116,41 @@ export default {
         this.editCategory();
       }
     },
-    editCategory(){
-      let {catId, name, icon, productUnit}=this.category;
+    allowDrop(draggingNode, dropNode, type) {
+      //判断节点拖拽到某个位置后是否允许放置
+      console.log("拖拽的数据", draggingNode, dropNode, type);
+      //判断能否拖拽的关键在于：拖拽某个位置之后，层级是否超过3。如果超过，则不允许拖动，否则允许拖动。
+      //获取拖动的节点的最大层级数
+      this.countDraggingNodeLevel(draggingNode.data)
+      //计算深度
+      let deep = (this.maxLevel - draggingNode.data.catLevel) + 1;
+      //根据位置判断是否有父节点，如果有，加上父节点的层级数
+      if (type == "inner") {
+        return deep + dropNode.data.catLevel <= 3;
+      } else {
+        return deep + dropNode.parent.level <= 3;
+      }
+    },
+    countDraggingNodeLevel(nodeData) {
+      if (nodeData.children != null && nodeData.children.length !== 0) {
+        //有子节点，需要判断子节点的中是否嵌套有子节点
+        for (let i = 0; i < nodeData.children.length; i++) {
+          //当前子节点是否已经超过最大层级数
+          if (nodeData.children[i].catLevel > this.maxLevel) {
+            this.maxLevel = nodeData.children[i].catLevel;
+          }
+          //还需要判断子节点的子节点是否有超过层级数的，是一个递归
+          this.countDraggingNodeLevel(nodeData.children[i])
+        }
+      }
+    },
+    editCategory() {
+      let {catId, name, icon, productUnit} = this.category;
       //调用接口修改分类
       this.$http({
         url: this.$http.adornUrl('/product/category/update'),
         method: 'post',
-        data: this.$http.adornData({catId,name,icon,productUnit}, false)
+        data: this.$http.adornData({catId, name, icon, productUnit}, false)
       }).then(({data}) => {
         if (data && data.code === 0) {
           this.$message({
@@ -159,6 +192,7 @@ export default {
       })
     },
     remove(node, data) {
+      console.log("remove:", node, data);
       let ids = [data.catId];
       //弹出确认框，让用户二次确认
       this.$confirm(`是否删除【${data.name}】菜单?`, '提示', {
@@ -190,7 +224,6 @@ export default {
       }).catch(() => {
         //点击取消执行catch里面的代码
       });
-      console.log("remove:", node, data);
     }
   },
   created() {
