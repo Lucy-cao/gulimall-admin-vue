@@ -1,11 +1,20 @@
 <template>
   <div>
+    <el-switch
+      v-model="draggable"
+      active-text="开启拖拽"
+      inactive-text="关闭拖拽">
+    </el-switch>
+    <el-button type="primary" @click="batchSave">保存</el-button>
+    <el-button @click="getDataList">刷新</el-button>
     <el-tree :data="menus" :props="defaultProps"
              :expand-on-click-node="false"
              show-checkbox
              node-key="catId"
              :default-expanded-keys="expandKeys"
-             draggable :allow-drop="allowDrop">
+             :draggable="draggable"
+             :allow-drop="allowDrop"
+             @node-drop="handleDrop">
     <span class="custom-tree-node" slot-scope="{ node, data }">
       <span>{{ node.label }}</span>
       <span>
@@ -65,7 +74,10 @@ export default {
       },
       formLabelWidth: '120px',
       title: "",//弹窗的标题
-      maxLevel: 1
+      maxLevel: 1,
+      updatedNodes: [],
+      draggable: false,
+      pCid: []
     };
   },
   methods: {
@@ -77,6 +89,110 @@ export default {
         console.log('获取到菜单数据', data.data);
         this.menus = data.data;
       })
+    },
+    batchSave() {
+      console.log("batchSave");
+      //批量保存拖动的结果，弹框确认
+      this.$confirm('确定保存拖拽后的结果?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        //对拖拽后的数据进行去重，如果有catId相同的节点，则保留最新的那条数据
+        let countResult = {};
+        let realCountResult = {};
+        let realUpdate = [];
+        //1、统计catId出现的次数
+        this.updatedNodes.forEach(element => {
+          if (countResult[element["catId"]])
+            countResult[element["catId"]]++;
+          else
+            countResult[element["catId"]] = 1;
+        });
+        console.log("countResult", countResult);
+        //2、如果是最后一次出现则保留，否则不保留
+        this.updatedNodes.forEach(element => {
+          if (realCountResult[element["catId"]])
+            realCountResult[element["catId"]]++;
+          else
+            realCountResult[element["catId"]] = 1;
+
+          if (realCountResult[element["catId"]] == countResult[element["catId"]]) {
+            realUpdate.push(element);
+          }
+        });
+        console.log("realUpdate", realUpdate)
+        //向后端发送请求保存拖拽后的数据
+        this.$http({
+          url: this.$http.adornUrl('/product/category/batchUpdate'),
+          method: 'post',
+          data: this.$http.adornData(realUpdate, false)
+        }).then(({data}) => {
+          if (data && data.code === 0) {
+            this.$message({
+              message: '菜单拖拽成功',
+              type: 'success'
+            });
+            //刷新节点数据
+            this.getDataList();
+            //清空待更新的节点信息
+            this.updatedNodes = [];
+            this.expandKeys = this.pCid;
+          } else {
+            this.$message.error(data.msg)
+          }
+        })
+      });
+    },
+    handleDrop(draggingNode, dropNode, dropType, ev) {
+      console.log('handleDrop', draggingNode, dropNode, dropType);
+      //拖拽后可能产生变化的字段有：父节点id、节点的顺序、节点的层级
+      let originLevel = draggingNode.level;
+      //1、获取拖拽后的父节点
+      let pCid = 0;
+      let siblings = null;
+      let newCatLevel = 0;
+      if (dropType == "inner") {
+        pCid = dropNode.data.catId;
+        siblings = dropNode.childNodes;
+        newCatLevel = dropNode.level + 1;
+      } else {
+        pCid = dropNode.parent == null ? 0 : dropNode.parent.data.catId;
+        siblings = dropNode.parent.childNodes;
+        newCatLevel = dropNode.level;
+      }
+      this.pCid.push(pCid);
+
+      //2、获取拖拽后节点最新的顺序，可能影响拖拽的节点和其兄弟节点的顺序
+      for (let i = 0; i < siblings.length; i++) {
+        if (siblings[i].data.catId == draggingNode.data.catId) {
+          //如果为拖拽的节点，则需要更新父节点id，排序，层级
+          this.updatedNodes.push({
+            catId: siblings[i].data.catId, parentCid: pCid, sort: i, catLevel: newCatLevel
+          })
+        } else {
+          this.updatedNodes.push({
+            catId: siblings[i].data.catId, sort: i
+          })
+        }
+      }
+
+      //3、获取拖拽节点的层级，以及其子节点的层级也可能产生变化
+      if (originLevel != newCatLevel) {
+        //拖拽的节点的子节点层级也需要变化，并且是递归变化，因为子节点可能还有子节点
+        this.updateChildLevel(draggingNode, newCatLevel);
+      }
+      console.log("this.updatedNodes", this.updatedNodes);
+    },
+    updateChildLevel(node, newCatLevel) {
+      //递归更新子节点的层级
+      for (let i = 0; i < node.childNodes.length; i++) {
+        this.updatedNodes.push({
+          catId: node.childNodes[i].data.catId,
+          catLevel: newCatLevel + 1
+        })
+        this.updateChildLevel(node.childNodes[i], newCatLevel + 1);
+      }
     },
     append(data) {
       console.log("append:", data);
@@ -121,26 +237,27 @@ export default {
       console.log("拖拽的数据", draggingNode, dropNode, type);
       //判断能否拖拽的关键在于：拖拽某个位置之后，层级是否超过3。如果超过，则不允许拖动，否则允许拖动。
       //获取拖动的节点的最大层级数
-      this.countDraggingNodeLevel(draggingNode.data)
+      this.maxLevel = draggingNode.level;
+      this.countDraggingNodeLevel(draggingNode)
       //计算深度
-      let deep = (this.maxLevel - draggingNode.data.catLevel) + 1;
+      let deep = (this.maxLevel - draggingNode.level) + 1;
       //根据位置判断是否有父节点，如果有，加上父节点的层级数
       if (type == "inner") {
-        return deep + dropNode.data.catLevel <= 3;
+        return (deep + dropNode.level) <= 3;
       } else {
-        return deep + dropNode.parent.level <= 3;
+        return (deep + dropNode.parent.level) <= 3;
       }
     },
-    countDraggingNodeLevel(nodeData) {
-      if (nodeData.children != null && nodeData.children.length !== 0) {
+    countDraggingNodeLevel(node) {
+      if (node.childNodes != null && node.childNodes.length !== 0) {
         //有子节点，需要判断子节点的中是否嵌套有子节点
-        for (let i = 0; i < nodeData.children.length; i++) {
+        for (let i = 0; i < node.childNodes.length; i++) {
           //当前子节点是否已经超过最大层级数
-          if (nodeData.children[i].catLevel > this.maxLevel) {
-            this.maxLevel = nodeData.children[i].catLevel;
+          if (node.childNodes[i].level > this.maxLevel) {
+            this.maxLevel = node.childNodes[i].level;
           }
           //还需要判断子节点的子节点是否有超过层级数的，是一个递归
-          this.countDraggingNodeLevel(nodeData.children[i])
+          this.countDraggingNodeLevel(node.childNodes[i])
         }
       }
     },
