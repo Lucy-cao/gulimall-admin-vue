@@ -5,7 +5,7 @@
       active-text="开启拖拽"
       inactive-text="关闭拖拽">
     </el-switch>
-    <el-button type="primary" @click="batchSave">保存</el-button>
+    <el-button type="primary" @click="batchSave">批量保存</el-button>
     <el-button @click="getDataList">刷新</el-button>
     <el-tree :data="menus" :props="defaultProps"
              :expand-on-click-node="false"
@@ -98,35 +98,11 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        //对拖拽后的数据进行去重，如果有catId相同的节点，则保留最新的那条数据
-        let countResult = {};
-        let realCountResult = {};
-        let realUpdate = [];
-        //1、统计catId出现的次数
-        this.updatedNodes.forEach(element => {
-          if (countResult[element["catId"]])
-            countResult[element["catId"]]++;
-          else
-            countResult[element["catId"]] = 1;
-        });
-        console.log("countResult", countResult);
-        //2、如果是最后一次出现则保留，否则不保留
-        this.updatedNodes.forEach(element => {
-          if (realCountResult[element["catId"]])
-            realCountResult[element["catId"]]++;
-          else
-            realCountResult[element["catId"]] = 1;
-
-          if (realCountResult[element["catId"]] == countResult[element["catId"]]) {
-            realUpdate.push(element);
-          }
-        });
-        console.log("realUpdate", realUpdate)
         //向后端发送请求保存拖拽后的数据
         this.$http({
           url: this.$http.adornUrl('/product/category/batchUpdate'),
           method: 'post',
-          data: this.$http.adornData(realUpdate, false)
+          data: this.$http.adornData(this.updatedNodes, false)
         }).then(({data}) => {
           if (data && data.code === 0) {
             this.$message({
