@@ -7,7 +7,7 @@
       <div class="mod-config">
         <el-form :inline="true" :model="dataForm" @keyup.enter.native="getDataList()">
           <el-form-item>
-            <el-input v-model="dataForm.key" placeholder="参数名" clearable></el-input>
+            <el-input v-model="dataForm.key" placeholder="属性名" clearable></el-input>
           </el-form-item>
           <el-form-item>
             <el-button @click="getDataList()">查询</el-button>
@@ -70,7 +70,7 @@
               <i class="el-icon-error" v-else></i>
             </template>
           </el-table-column>
-          <el-table-column prop="catelogName" header-align="center" align="center" label="所属分类"></el-table-column>
+          <el-table-column prop="catelogName" header-align="center" align="center" label="所属分类" width="160"></el-table-column>
           <el-table-column
             v-if="attrtype == 1"
             prop="groupName"
@@ -119,6 +119,7 @@
 </template>
 
 <script>
+/*eslint-disable*/
 //这里可以导入其他文件（比如：组件，工具js，第三方插件js，json文件，图片文件等等）
 //例如：import 《组件名称》 from '《组件路径》';
 import Category from "../common/category";
@@ -247,5 +248,5 @@ export default {
   }
 };
 </script>
-<style scoped>
+<style scoped>
 </style>

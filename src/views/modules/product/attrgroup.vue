@@ -36,9 +36,9 @@
           <el-table-column prop="attrGroupId" header-align="center" align="center" label="分组id"></el-table-column>
           <el-table-column prop="attrGroupName" header-align="center" align="center" label="组名"></el-table-column>
           <el-table-column prop="sort" header-align="center" align="center" label="排序"></el-table-column>
-          <el-table-column prop="descript" header-align="center" align="center" label="描述"></el-table-column>
+          <el-table-column prop="descript" header-align="center" align="center" label="描述" width="160"></el-table-column>
           <el-table-column prop="icon" header-align="center" align="center" label="组图标"></el-table-column>
-          <el-table-column prop="catelogId" header-align="center" align="center" label="所属分类id"></el-table-column>
+          <el-table-column prop="catelogNames" header-align="center" align="center" label="所属分类" width="170"></el-table-column>
           <el-table-column
             fixed="right"
             header-align="center"
