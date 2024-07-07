@@ -45,15 +45,19 @@
         </template>
       </el-table-column>
       <el-table-column type="selection" header-align="center" align="center" width="50"></el-table-column>
-      <el-table-column prop="skuId" header-align="center" align="center" label="skuId"></el-table-column>
+      <el-table-column prop="skuId" header-align="center" align="center" label="skuId" v-if="false"></el-table-column>
       <el-table-column prop="skuName" header-align="center" align="center" label="名称"></el-table-column>
       <el-table-column prop="skuDefaultImg" header-align="center" align="center" label="默认图片">
         <template slot-scope="scope">
           <img :src="scope.row.skuDefaultImg" style="width:80px;height:80px;" />
         </template>
       </el-table-column>
-      <el-table-column prop="price" header-align="center" align="center" label="价格"></el-table-column>
+      <el-table-column prop="price" header-align="center" align="center" label="价格(元)"></el-table-column>
       <el-table-column prop="saleCount" header-align="center" align="center" label="销量"></el-table-column>
+      <el-table-column prop="cascaderNames" header-align="center" align="center" label="分类"></el-table-column>
+      <el-table-column prop="brandName" header-align="center" align="center" label="品牌"></el-table-column>
+
+
       <el-table-column fixed="right" header-align="center" align="center" width="150" label="操作">
         <template slot-scope="scope">
           <el-button type="text" size="small" @click="previewHandle(scope.row.skuId)">预览</el-button>
