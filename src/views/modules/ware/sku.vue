@@ -6,8 +6,8 @@
           <el-option :label="w.name" :value="w.id" v-for="w in wareList" :key="w.id"></el-option>
         </el-select>
       </el-form-item>
-      <el-form-item label="skuId">
-        <el-input v-model="dataForm.skuId" placeholder="skuId" clearable></el-input>
+      <el-form-item label="关键字">
+        <el-input v-model="dataForm.skuName" placeholder="商品名称" clearable></el-input>
       </el-form-item>
       <el-form-item>
         <el-button @click="getDataList()">查询</el-button>
@@ -29,10 +29,11 @@
     >
       <el-table-column type="selection" header-align="center" align="center" width="50"></el-table-column>
       <el-table-column prop="id" header-align="center" align="center" label="id"></el-table-column>
-      <el-table-column prop="skuId" header-align="center" align="center" label="sku_id"></el-table-column>
-      <el-table-column prop="wareId" header-align="center" align="center" label="仓库id"></el-table-column>
+      <el-table-column prop="skuId" header-align="center" align="center" label="sku_id" v-if="false"></el-table-column>
+      <el-table-column prop="skuName" header-align="center" align="center" label="商品名称"></el-table-column>
+      <el-table-column prop="wareId" header-align="center" align="center" label="仓库id" v-if="false"></el-table-column>
+      <el-table-column prop="wareName" header-align="center" align="center" label="仓库名称"></el-table-column>
       <el-table-column prop="stock" header-align="center" align="center" label="库存数"></el-table-column>
-      <el-table-column prop="skuName" header-align="center" align="center" label="sku_name"></el-table-column>
       <el-table-column prop="stockLocked" header-align="center" align="center" label="锁定库存"></el-table-column>
       <el-table-column fixed="right" header-align="center" align="center" width="150" label="操作">
         <template slot-scope="scope">
@@ -63,7 +64,7 @@ export default {
       wareList: [],
       dataForm: {
         wareId: "",
-        skuId: ""
+        skuName: ""
       },
       dataList: [],
       pageIndex: 1,
@@ -107,7 +108,7 @@ export default {
         params: this.$http.adornParams({
           page: this.pageIndex,
           limit: this.pageSize,
-          skuId: this.dataForm.skuId,
+          skuName: this.dataForm.skuName,
           wareId: this.dataForm.wareId
         })
       }).then(({ data }) => {

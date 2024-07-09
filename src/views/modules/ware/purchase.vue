@@ -2,7 +2,7 @@
   <div class="mod-config">
     <el-form :inline="true" :model="dataForm" @keyup.enter.native="getDataList()">
       <el-form-item label="状态">
-        <el-select style="width:120px;" v-model="dataForm.status" placeholder="请选择状态" clearable>
+        <el-select style="width:180px;" v-model="dataForm.status" placeholder="请选择状态" clearable>
           <el-option label="新建" :value="0"></el-option>
           <el-option label="已分配" :value="1"></el-option>
           <el-option label="已领取" :value="2"></el-option>
@@ -11,7 +11,7 @@
         </el-select>
       </el-form-item>
       <el-form-item label="关键字">
-        <el-input style="width:120px;" v-model="dataForm.key" placeholder="参数名" clearable></el-input>
+        <el-input style="width:180px;" v-model="dataForm.key" placeholder="采购单id|采购人姓名" clearable></el-input>
       </el-form-item>
       <el-form-item>
         <el-button @click="getDataList()">查询</el-button>
@@ -19,13 +19,15 @@
           v-if="isAuth('ware:purchase:save')"
           type="primary"
           @click="addOrUpdateHandle()"
-        >新增</el-button>
+        >新增
+        </el-button>
         <el-button
           v-if="isAuth('ware:purchase:delete')"
           type="danger"
           @click="deleteHandle()"
           :disabled="dataListSelections.length <= 0"
-        >批量删除</el-button>
+        >批量删除
+        </el-button>
       </el-form-item>
     </el-form>
     <el-table
@@ -37,8 +39,9 @@
     >
       <el-table-column type="selection" header-align="center" align="center" width="50"></el-table-column>
       <el-table-column prop="id" header-align="center" align="center" label="采购单id"></el-table-column>
-      <el-table-column prop="assigneeId" header-align="center" align="center" label="采购人id"></el-table-column>
-      <el-table-column prop="assigneeName" header-align="center" align="center" label="采购人名"></el-table-column>
+      <el-table-column prop="assigneeId" header-align="center" align="center" label="采购人id"
+                       v-if="false"></el-table-column>
+      <el-table-column prop="assigneeName" header-align="center" align="center" label="采购人姓名"></el-table-column>
       <el-table-column prop="phone" header-align="center" align="center" label="联系方式"></el-table-column>
       <el-table-column prop="priority" header-align="center" align="center" label="优先级"></el-table-column>
       <el-table-column prop="status" header-align="center" align="center" label="状态">
@@ -50,7 +53,8 @@
           <el-tag type="danger" v-if="scope.row.status == 4">有异常</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="wareId" header-align="center" align="center" label="仓库id"></el-table-column>
+      <el-table-column prop="wareId" header-align="center" align="center" label="仓库id" v-if="false"></el-table-column>
+      <el-table-column prop="wareName" header-align="center" align="center" label="仓库名称"></el-table-column>
       <el-table-column prop="amount" header-align="center" align="center" label="总金额"></el-table-column>
       <el-table-column prop="createTime" header-align="center" align="center" label="创建日期"></el-table-column>
       <el-table-column prop="updateTime" header-align="center" align="center" label="更新日期"></el-table-column>
@@ -61,7 +65,8 @@
             size="small"
             v-if="scope.row.status==0||scope.row.status==1"
             @click="opendrawer(scope.row)"
-          >分配</el-button>
+          >分配
+          </el-button>
           <el-button type="text" size="small" @click="addOrUpdateHandle(scope.row.id)">修改</el-button>
           <el-button type="text" size="small" @click="deleteHandle(scope.row.id)">删除</el-button>
         </template>
@@ -96,7 +101,9 @@
 </template>
 
 <script>
+/*eslint-disable*/
 import AddOrUpdate from "./purchase-add-or-update";
+
 export default {
   data() {
     return {
@@ -124,10 +131,10 @@ export default {
     this.getDataList();
   },
   created() {
-    
+
   },
   methods: {
-    opendrawer(row){
+    opendrawer(row) {
       this.getUserList();
       this.currentRow = row;
       this.caigoudialogVisible = true;
@@ -135,15 +142,15 @@ export default {
     assignUser() {
       let _this = this;
       let user = {};
-      this.userList.forEach(item=>{
-        if(item.userId == _this.userId){
-            user = item;
+      this.userList.forEach(item => {
+        if (item.userId == _this.userId) {
+          user = item;
         }
       });
       this.caigoudialogVisible = false;
       this.$http({
         url: this.$http.adornUrl(
-          `/ware/purchase/update`
+          `/ware/purchase/allocateUser`
         ),
         method: "post",
         data: this.$http.adornData({
@@ -153,14 +160,14 @@ export default {
           phone: user.mobile,
           status: 1
         })
-      }).then(({ data }) => {
+      }).then(({data}) => {
         if (data && data.code === 0) {
           this.$message({
             message: "操作成功",
             type: "success",
             duration: 1500
           });
-          
+
           this.userId = "";
           this.getDataList();
         } else {
@@ -176,7 +183,7 @@ export default {
           page: 1,
           limit: 500
         })
-      }).then(({ data }) => {
+      }).then(({data}) => {
         this.userList = data.page.list;
       });
     },
@@ -189,9 +196,10 @@ export default {
         params: this.$http.adornParams({
           page: this.pageIndex,
           limit: this.pageSize,
-          key: this.dataForm.key
+          key: this.dataForm.key,
+          status: this.dataForm.status
         })
-      }).then(({ data }) => {
+      }).then(({data}) => {
         if (data && data.code === 0) {
           this.dataList = data.page.list;
           this.totalPage = data.page.totalCount;
@@ -229,8 +237,8 @@ export default {
       var ids = id
         ? [id]
         : this.dataListSelections.map(item => {
-            return item.id;
-          });
+          return item.id;
+        });
       this.$confirm(
         `确定对[id=${ids.join(",")}]进行[${id ? "删除" : "批量删除"}]操作?`,
         "提示",
@@ -244,7 +252,7 @@ export default {
           url: this.$http.adornUrl("/ware/purchase/delete"),
           method: "post",
           data: this.$http.adornData(ids, false)
-        }).then(({ data }) => {
+        }).then(({data}) => {
           if (data && data.code === 0) {
             this.$message({
               message: "操作成功",

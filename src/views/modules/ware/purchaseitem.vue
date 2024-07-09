@@ -2,12 +2,12 @@
   <div class="mod-config">
     <el-form :inline="true" :model="dataForm" @keyup.enter.native="getDataList()">
       <el-form-item label="仓库">
-        <el-select style="width:120px;" v-model="dataForm.wareId" placeholder="请选择仓库" clearable>
+        <el-select style="width:180px;" v-model="dataForm.wareId" placeholder="请选择仓库" clearable>
           <el-option :label="w.name" :value="w.id" v-for="w in wareList" :key="w.id"></el-option>
         </el-select>
       </el-form-item>
       <el-form-item label="状态">
-        <el-select style="width:120px;" v-model="dataForm.status" placeholder="请选择状态" clearable>
+        <el-select style="width:180px;" v-model="dataForm.status" placeholder="请选择状态" clearable>
           <el-option label="新建" :value="0"></el-option>
           <el-option label="已分配" :value="1"></el-option>
           <el-option label="正在采购" :value="2"></el-option>
@@ -16,7 +16,7 @@
         </el-select>
       </el-form-item>
       <el-form-item label="关键字">
-        <el-input style="width:120px;" v-model="dataForm.key" placeholder="参数名" clearable></el-input>
+        <el-input style="width:180px;" v-model="dataForm.key" placeholder="采购单id" clearable></el-input>
       </el-form-item>
       <el-form-item>
         <el-button @click="getDataList()">查询</el-button>
@@ -51,7 +51,8 @@
       <el-table-column prop="skuId" header-align="center" align="center" label="采购商品id"></el-table-column>
       <el-table-column prop="skuNum" header-align="center" align="center" label="采购数量"></el-table-column>
       <el-table-column prop="skuPrice" header-align="center" align="center" label="采购金额"></el-table-column>
-      <el-table-column prop="wareId" header-align="center" align="center" label="仓库id"></el-table-column>
+      <el-table-column prop="wareId" header-align="center" align="center" label="仓库id" v-if="false"></el-table-column>
+      <el-table-column prop="wareName" header-align="center" align="center" label="仓库名称"></el-table-column>
       <el-table-column prop="status" header-align="center" align="center" label="状态">
         <template slot-scope="scope">
           <el-tag v-if="scope.row.status==0">新建</el-tag>
